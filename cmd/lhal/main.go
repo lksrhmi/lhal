@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	source "cmd/lhal/internal/souce"
+	"cmd/lhal/internal/ui/cli"
+)
 
 func main() {
-	fmt.Println("Hello fellow Travler!")
+	cpuData, _ := source.ReadCPUStat()
+
+	cli.Render(cpuData)
 }
