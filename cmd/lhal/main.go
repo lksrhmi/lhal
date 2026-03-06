@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"cli"
+)
 
 func main() {
-	fmt.Println("Hello fellow Travler!")
+	if err := cli.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }
