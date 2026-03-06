@@ -1,11 +1,9 @@
 package main
 
 import (
-	"cli"
+	"cmd/lhal/cli"
 )
 
 func main() {
-	if err := cli.Execute(); err != nil {
-		log.Fatal(err)
-	}
+	cli.Execute()
 }

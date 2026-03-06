@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type CPUStat struct {
+type CpuStat struct {
 	User    uint64
 	Nice    uint64
 	System  uint64
@@ -15,12 +15,14 @@ type CPUStat struct {
 	Iowait  uint64
 	IRQ     uint64
 	SoftIRQ uint64
+
+	Total uint64
 }
 
-func ReadCPUStat() (CPUStat, error) {
+func ReadCPUStat() (CpuStat, error) {
 	file, err := os.Open("/proc/stat")
 	if err != nil {
-		return CPUStat{}, err
+		return CpuStat{}, err
 	}
 	defer file.Close()
 
@@ -40,7 +42,7 @@ func ReadCPUStat() (CPUStat, error) {
 			irq, _ := strconv.ParseUint(fields[6], 10, 64)
 			softirq, _ := strconv.ParseUint(fields[7], 10, 64)
 
-			return CPUStat{
+			return CpuStat{
 				User:    user,
 				Nice:    nice,
 				System:  system,
@@ -48,9 +50,11 @@ func ReadCPUStat() (CPUStat, error) {
 				Iowait:  iowait,
 				IRQ:     irq,
 				SoftIRQ: softirq,
+				
+				Total: user + nice + system + idle + iowait + irq + softirq,
 			}, nil
 		}
 	}
 
-	return CPUStat{}, nil
+	return CpuStat{}, nil
 }
