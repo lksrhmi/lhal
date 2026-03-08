@@ -4,38 +4,35 @@ import (
 	"cmd/lhal/internal/source"
 	_ "fmt"
 	"time"
+	_ "time"
 )
 
+
+// returns a float64. CPU usage in percent 0-100
 func GetUsage() (float64, error) {
+	intervall := time.Millisecond * 100
 
-	usage, _:= calculate()
-
-	return usage, nil
-}
-
-func calculate() (float64, error) {
-	const wait = 50 * time.Millisecond
-
-	rawCpu1, err := source.ReadCPUStat()
-	if err != nil {
-		return 0, err
+	idle1, total1, getCpuTimesErr1 := source.ReadCpuStat()
+	if getCpuTimesErr1 != nil {
+		return 0, getCpuTimesErr1
 	}
 
-	time.Sleep(wait)
+	// wait given time
+	time.Sleep(intervall)
 
-	rawCpu2, err := source.ReadCPUStat()
-	if err != nil {
-		return 0, err
+	idle2, total2, getCpuTimesErr2 := source.ReadCpuStat()
+	if getCpuTimesErr2 != nil {
+		return 0, getCpuTimesErr2
 	}
 
-	totalDelta := rawCpu2.Total - rawCpu1.Total
-	idleDelta := rawCpu2.Idle - rawCpu1.Idle
+	totalDelta := total2 - total1
+	idleDelta := idle2 - idle1
 
 	if totalDelta == 0 {
 		return 0, nil
 	}
 
 	usage := float64(totalDelta-idleDelta) / float64(totalDelta) * 100
-
+	
 	return usage, nil
 }

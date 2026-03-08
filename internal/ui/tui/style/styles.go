@@ -2,7 +2,7 @@ package style
 
 import "github.com/charmbracelet/lipgloss"
 
-var ContainerStyle = lipgloss.NewStyle().
+var CpuUsageContainerStyle = lipgloss.NewStyle().
 	Border(lipgloss.RoundedBorder()).
 	Padding(1, 2).
 	BorderForeground(lipgloss.Color("63"))

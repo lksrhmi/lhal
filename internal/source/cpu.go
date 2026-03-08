@@ -2,59 +2,42 @@ package source
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 )
 
-type CpuStat struct {
-	User    uint64
-	Nice    uint64
-	System  uint64
-	Idle    uint64
-	Iowait  uint64
-	IRQ     uint64
-	SoftIRQ uint64
-
-	Total uint64
-}
-
-func ReadCPUStat() (CpuStat, error) {
+// ReadCpuStat reads cpu times. gives back idle, total and error
+func ReadCpuStat() (idle, total uint64, err error) {
 	file, err := os.Open("/proc/stat")
 	if err != nil {
-		return CpuStat{}, err
+		return 0, 0, err
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-
 	for scanner.Scan() {
 		line := scanner.Text()
+		fields := strings.Fields(line)
 
-		if strings.HasPrefix(line, "cpu ") {
-			fields := strings.Fields(line)
+		// reads cpu line
+		if len(fields) > 0 && fields[0] == "cpu" {
+			var currentTotal uint64
+			for i := 1; i < len(fields); i++ {
+				val, err := strconv.ParseUint(fields[i], 10, 64)
+				if err != nil {
+					return 0, 0, err
+				}
+				currentTotal += val
 
-			user, _ := strconv.ParseUint(fields[1], 10, 64)
-			nice, _ := strconv.ParseUint(fields[2], 10, 64)
-			system, _ := strconv.ParseUint(fields[3], 10, 64)
-			idle, _ := strconv.ParseUint(fields[4], 10, 64)
-			iowait, _ := strconv.ParseUint(fields[5], 10, 64)
-			irq, _ := strconv.ParseUint(fields[6], 10, 64)
-			softirq, _ := strconv.ParseUint(fields[7], 10, 64)
-
-			return CpuStat{
-				User:    user,
-				Nice:    nice,
-				System:  system,
-				Idle:    idle,
-				Iowait:  iowait,
-				IRQ:     irq,
-				SoftIRQ: softirq,
-				
-				Total: user + nice + system + idle + iowait + irq + softirq,
-			}, nil
+				// Field 4 is 'idle' time
+				if i == 4 {
+					idle = val
+				}
+			}
+			return idle, currentTotal, nil
 		}
 	}
-
-	return CpuStat{}, nil
+	return 0, 0, fmt.Errorf("could not find cpu line in /proc/stat")
 }

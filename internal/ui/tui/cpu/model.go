@@ -2,11 +2,13 @@ package cpu
 
 import (
 	"fmt"
+	_ "image/color/palette"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"cmd/lhal/internal/service/cpu"
 	"cmd/lhal/internal/ui/tui/style"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type tickMsg float64
@@ -19,7 +21,7 @@ type Model struct {
 
 func New() Model {
 	return Model{
-		history: []float64{},
+		history: []float64{0},
 		width:   60,
 		height:  10,
 	}
@@ -27,7 +29,11 @@ func New() Model {
 
 func tick() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
-		usage, _ := cpu.GetUsage()
+		usage, getUsageErr := cpu.GetUsage()
+		if getUsageErr != nil {
+			panic("heyho, cpu usage from Service")
+		}
+
 		return tickMsg(usage)
 	})
 }
@@ -39,16 +45,21 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
+		case tickMsg:
+			m.history = append(m.history, float64(msg))
 
-	case tickMsg:
-		m.history = append(m.history, float64(msg))
+			// cuts off the last part
+			if len(m.history) > m.width {
+				m.history = m.history[1:]
+			}
 
-		if len(m.history) > m.width {
-			m.history = m.history[1:]
-		}
+			return m, tick()
 
-		return m, tick()
-
+		case tea.KeyMsg:
+			switch msg.String() {
+				case "q":
+					return m, tea.Quit
+			}
 	}
 
 	return m, nil
@@ -56,22 +67,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 
-	graph := drawGraph(m.history, m.height)
+	graph := getGraph(&m)
 
-	return style.ContainerStyle.Render(
-		fmt.Sprintf(
-			"%s\n\n%s\n\n%s %.1f%%",
-			style.TitleStyle.Render("CPU Monitor"),
-			graph,
-			style.LabelStyle.Render("Usage:"),
-			last(m.history),
+	return style.CpuUsageContainerStyle.Render(
+		graph,
+		fmt.Sprint(
+			"\n",
+			"q for exit",
 		),
 	)
-}
-
-func last(values []float64) float64 {
-	if len(values) == 0 {
-		return 0
-	}
-	return values[len(values)-1]
 }

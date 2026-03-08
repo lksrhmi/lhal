@@ -5,7 +5,8 @@ import tea "github.com/charmbracelet/bubbletea"
 func Start() {
 	p := tea.NewProgram(New())
 
-	if err := p.Start(); err != nil {
-		panic(err)
+	_, runTeaErr := p.Run()
+	if runTeaErr != nil {
+		panic("TEA got spilled")
 	}
 }
