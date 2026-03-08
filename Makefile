@@ -12,6 +12,9 @@ run: build
 install:
 	go install $(CMD_PATH)
 
+i:
+	go install $(CMD_PATH)
+
 clean:
 	rm -rf $(BIN_DIR)
 
